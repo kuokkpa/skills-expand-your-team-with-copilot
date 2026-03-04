@@ -472,6 +472,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Function to share an activity via different platforms
+  function shareActivity(platform, activityName, description, buttonEl) {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(activityName)}`;
+    const shareText = `Check out "${activityName}" at Mergington High School! ${description}`;
+
+    if (platform === "twitter") {
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, "_blank", "noopener,noreferrer");
+    } else if (platform === "whatsapp") {
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    } else if (platform === "email") {
+      const subject = encodeURIComponent(`Join me: ${activityName} at Mergington High School`);
+      const body = encodeURIComponent(`${shareText}\n\nLearn more: ${shareUrl}`);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    } else if (platform === "copy") {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        const originalTitle = buttonEl.title;
+        buttonEl.title = "Copied!";
+        buttonEl.classList.add("share-copied");
+        setTimeout(() => {
+          buttonEl.title = originalTitle;
+          buttonEl.classList.remove("share-copied");
+        }, 1500);
+      }).catch(() => {
+        alert("Could not copy link. Please copy it manually: " + shareUrl);
+      });
+    }
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -569,6 +599,15 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-section">
+        <span class="share-label">Share:</span>
+        <div class="share-buttons">
+          <button class="share-button share-twitter" data-activity="${name}" title="Share on X (Twitter)" aria-label="Share on X (Twitter)">𝕏</button>
+          <button class="share-button share-whatsapp" data-activity="${name}" title="Share on WhatsApp" aria-label="Share on WhatsApp">💬</button>
+          <button class="share-button share-email" data-activity="${name}" title="Share via Email" aria-label="Share via Email">✉️</button>
+          <button class="share-button share-copy" data-activity="${name}" title="Copy link" aria-label="Copy link">🔗</button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -586,6 +625,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for share buttons
+    activityCard.querySelector(".share-twitter").addEventListener("click", () => shareActivity("twitter", name, details.description));
+    activityCard.querySelector(".share-whatsapp").addEventListener("click", () => shareActivity("whatsapp", name, details.description));
+    activityCard.querySelector(".share-email").addEventListener("click", () => shareActivity("email", name, details.description));
+    activityCard.querySelector(".share-copy").addEventListener("click", (e) => shareActivity("copy", name, details.description, e.currentTarget));
 
     activitiesList.appendChild(activityCard);
   }
